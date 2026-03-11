@@ -50,25 +50,37 @@ function SystemMsg({ text }) {
 
 // ─── Message bubble ───────────────────────────────────────────────────────────
 
-function Bubble({ msg, isOwn, showAvatar, showName }) {
+function bubbleRounding(isOwn, isFirst, isLast) {
+  if (isFirst && isLast) return isOwn ? "rounded-2xl rounded-br-md" : "rounded-2xl rounded-bl-md";
+  if (isFirst)           return isOwn ? "rounded-2xl rounded-br-sm" : "rounded-2xl rounded-bl-sm";
+  if (isLast)            return isOwn ? "rounded-2xl rounded-tr-sm" : "rounded-2xl rounded-tl-sm";
+  return isOwn ? "rounded-2xl rounded-r-sm" : "rounded-2xl rounded-l-sm";
+}
+
+function Bubble({ msg, isOwn, isFirst, isLast }) {
+  const rounding = bubbleRounding(isOwn, isFirst, isLast);
   return (
-    <div className={`flex items-end gap-2 msg-animate ${isOwn ? "flex-row-reverse" : "flex-row"}`}>
-      {/* Avatar — always reserve space so bubbles don't shift */}
-      <div className="w-7 shrink-0">
-        {showAvatar && !isOwn && <Avatar name={msg.username} />}
+    <div
+      className={`flex items-end gap-2 msg-animate ${isOwn ? "flex-row-reverse" : "flex-row"} ${
+        isFirst && !isLast ? "mt-3" : isFirst ? "mt-3" : "mt-0.5"
+      }`}
+    >
+      {/* Avatar — shown only for the last message in a group */}
+      <div className="w-7 shrink-0 self-end">
+        {isLast && !isOwn ? <Avatar name={msg.username} /> : null}
       </div>
 
       <div className={`flex flex-col max-w-[72%] ${isOwn ? "items-end" : "items-start"}`}>
-        {showName && !isOwn && (
+        {isFirst && !isOwn && (
           <span className="text-[11px] font-semibold text-white/40 mb-1 ml-1">
             {msg.username}
           </span>
         )}
         <div
-          className={`group relative px-4 py-2.5 rounded-2xl text-sm leading-relaxed select-text ${
+          className={`group relative px-4 py-2.5 text-sm leading-relaxed select-text ${rounding} ${
             isOwn
-              ? "bg-indigo-600 text-white rounded-br-md"
-              : "bg-[#191919] text-white/85 border border-white/[0.06] rounded-bl-md"
+              ? "bg-indigo-600 text-white"
+              : "bg-[#191919] text-white/85 border border-white/[0.06]"
           }`}
         >
           {msg.text}
@@ -179,7 +191,7 @@ export default function ChatPanel({ username }) {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-1">
+      <div className="flex-1 overflow-y-auto px-4 py-4">
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full gap-3 text-center">
             <div className="w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/[0.05] flex items-center justify-center text-xl">
@@ -192,14 +204,18 @@ export default function ChatPanel({ username }) {
             if (msg.type === "system") return <SystemMsg key={i} text={msg.text} />;
             const isOwn = msg.username === username;
             const prev = messages[i - 1];
-            const sameUser = prev?.type === "message" && prev?.username === msg.username;
+            const next = messages[i + 1];
+            const sameAsPrev = prev?.type === "message" && prev?.username === msg.username;
+            const sameAsNext = next?.type === "message" && next?.username === msg.username;
+            const isFirst = !sameAsPrev;
+            const isLast = !sameAsNext;
             return (
               <Bubble
                 key={i}
                 msg={msg}
                 isOwn={isOwn}
-                showAvatar={!sameUser}
-                showName={!sameUser}
+                isFirst={isFirst}
+                isLast={isLast}
               />
             );
           })
@@ -208,8 +224,8 @@ export default function ChatPanel({ username }) {
       </div>
 
       {/* Input bar */}
-      <div className="px-4 py-4 border-t border-white/[0.05] shrink-0">
-        <div className="flex gap-2 items-center bg-[#111] border border-white/[0.07] rounded-2xl px-3 py-2 focus-within:border-indigo-500/40 focus-within:ring-1 focus-within:ring-indigo-500/15 transition-all">
+      <div className="px-4 py-3.5 border-t border-white/[0.08] bg-[#0e0e0e] shrink-0">
+        <div className="flex gap-2 items-center bg-[#161616] border border-white/[0.08] rounded-2xl px-3 py-2 focus-within:border-indigo-500/40 focus-within:ring-1 focus-within:ring-indigo-500/15 transition-all">
           <input
             ref={inputRef}
             type="text"
