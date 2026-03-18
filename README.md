@@ -1,4 +1,4 @@
- # ChatMath — Smart Chat + Math Assistant
+ # ChatMath — Smart Chat + Math Assistant.
 
 A full-stack real-time chat application with an integrated SymPy-powered math solver.
 
